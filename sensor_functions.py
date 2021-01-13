@@ -3,7 +3,7 @@ import RPi.GPIO as GPIO
 import datetime
 import time
 import json
-import matplotlib.pyplot as plt
+import numpy as np
 GPIO.setmode(GPIO.BCM)
 
 TRIG = 17
@@ -22,7 +22,7 @@ def write_json(distances):
     
     with open('distances.json', 'w') as outfile:
         json.dump(distances, outfile)
-    log.info("distances saved to distances.json")
+    print("distances saved to distances.json")
     
 def load_json(input_file):
     with open(input_file) as f:
@@ -43,17 +43,19 @@ def getdistance():
     sig_time = end-start
 
     distance = round(sig_time.microseconds / 58,2)   #(1/(speed/10**4))*2
-    print('Distance: {} centimeters'.format(distance))
+    #print('Distance: {} centimeters'.format(distance))
     return distance
     
     
 def setAngle(angle):
+    angle=(angle/18)+2
     pwm.ChangeDutyCycle(angle)
     time.sleep(0.5)
     pwm.ChangeDutyCycle(0)
     time.sleep(0.5)
 def getlocation():
-    return (0,0)    #for now
+    x,y=map(int,input().split())    #for now
+    return (x,y)    
     
 
 def turnAndGetDistance(step):
@@ -61,7 +63,7 @@ def turnAndGetDistance(step):
     forward=[]
     backward=[]
     angles=[]
-    point=getlocation()         #get x,y coordinate
+    point=getlocation()        #get x,y coordinate
     for i in range(0,181,step):
         duty=(i/18)+2
         pwm.ChangeDutyCycle(duty)
@@ -79,22 +81,24 @@ def turnAndGetDistance(step):
         time.sleep(0.5)
         d=getdistance()
         backward.insert(0,d)
+    
     forward=np.array(forward)
     backward=np.array(backward)
-    distances=np.dstack((point,angles,(forward+backward)/2)).tolist()
+    rounded=np.round((forward+backward)/2,2)
+    distances={'point':point,'angles':angles,'distance':rounded}
     return distances   
 
 def convertToXY(data):
     all_xy=[]
     
     for point in data:
-        point_x,point_y=point[0]
-        angles=np.deg2rad(np.array(point[1]))
-        distances=np.array(point[2])
+        point_x,point_y=point['point']
+        angles=np.deg2rad(point['angles'])
+        distances=point['distance']
            
         x=distances*np.cos(angles) +point_x
         y=distances*np.sin(angles) +point_y
-        xy=np.dstack((x,y)).tolist()
+        xy=np.round(np.dstack((x,y)),2).tolist()
         all_xy.append(xy)
     return np.array(all_xy).reshape(-1,2).tolist()
 
@@ -105,3 +109,15 @@ def cleanup():
     except:
         pass
 
+        
+readings=[]
+setAngle(0)
+count=5
+for i in range(count):
+    dis=turnAndGetDistance(45)
+    readings.append(dis)
+print(readings)
+converted=convertToXY(readings)
+print(converted)
+write_json(converted)
+cleanup()
