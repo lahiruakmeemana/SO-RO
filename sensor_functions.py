@@ -4,11 +4,11 @@ import datetime
 import time
 import json
 import numpy as np
-GPIO.setmode(GPIO.BCM)
+GPIO.setmode(GPIO.BOARD)
 
-TRIG = 17
-ECHO = 27
-servo=3
+TRIG = 11
+ECHO = 13
+servo=5
 start=0.
 end=0.
 GPIO.setup(TRIG,GPIO.OUT)
@@ -18,9 +18,9 @@ pwm=GPIO.PWM(servo,50)
 pwm.start(0)
 
 
-def write_json(distances):
+def write_json(path,distances):
     
-    with open('distances.json', 'w') as outfile:
+    with open(path, 'w') as outfile:
         json.dump(distances, outfile)
     print("distances saved to distances.json")
     
@@ -85,7 +85,7 @@ def turnAndGetDistance(step):
     forward=np.array(forward)
     backward=np.array(backward)
     rounded=np.round((forward+backward)/2,2)
-    distances={'point':point,'angles':angles,'distance':rounded}
+    distances={'point':point,'angles':angles.tolist(),'distance':rounded.tolist()}
     return distances   
 
 def convertToXY(data):
@@ -93,8 +93,8 @@ def convertToXY(data):
     
     for point in data:
         point_x,point_y=point['point']
-        angles=np.deg2rad(point['angles'])
-        distances=point['distance']
+        angles=np.deg2rad(np.array(point['angles']))
+        distances=np.array(point['distance'])
            
         x=distances*np.cos(angles) +point_x
         y=distances*np.sin(angles) +point_y
@@ -117,7 +117,8 @@ for i in range(count):
     dis=turnAndGetDistance(45)
     readings.append(dis)
 print(readings)
+write_json('sensor_readings.json',readings)
 converted=convertToXY(readings)
 print(converted)
-write_json(converted)
+write_json('distances.json'converted)
 cleanup()
