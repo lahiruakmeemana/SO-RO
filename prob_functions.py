@@ -1,5 +1,5 @@
 import math
-
+import numpy as np
 def probability_2D(d_cm, theta, z):
     d=d_cm/10
     delta_d=d*0.02
@@ -19,25 +19,25 @@ def probability_1D(d_cm,z):
 def sigmoidProbability(d):
     x = ((320-d)/300)*6
     P = 1/(1 + math.e**(-x))
-    return round(P,4)
+    return np.round(P,4)
 
 def expoProbability(d):
     x = (d)/300
     P = 0.75**x
-    return round(P,4)
+    return np.round(P,4)
 
-print(sigmoidProbability(50))
-print(sigmoidProbability(100))
-print(sigmoidProbability(150))
-print(sigmoidProbability(200))
-print(sigmoidProbability(250))
-print(sigmoidProbability(300))
+# print(sigmoidProbability(np.array([50,100,150,200,250,300])))
+# print(sigmoidProbability(100))
+# print(sigmoidProbability(150))
+# print(sigmoidProbability(200))
+# print(sigmoidProbability(250))
+# print(sigmoidProbability(300))
 
-print("---")
+# print("---")
 
-print(expoProbability(50))
-print(expoProbability(100))
-print(expoProbability(150))
-print(expoProbability(200))
-print(expoProbability(250))
-print(expoProbability(300))
+# print(expoProbability(50))
+# print(expoProbability(100))
+# print(expoProbability(150))
+# print(expoProbability(200))
+# print(expoProbability(250))
+# print(expoProbability(300))
