@@ -1,12 +1,16 @@
 import numpy as np
 import json
 import matplotlib.pyplot as plt
+import math
+from prob_functions import sigmoidProbability,expoProbability
 
 class Point_grid:
-    def __init__(self,data,resolution=1,ratio=0.75):
+    def __init__(self,data,direction,resolution=1,ratio=0.75):
         self.resolution = resolution
         self.point = data["point"]
-        self.size = np.array([600,600],dtype=np.int16) //self.resolution
+        self.direction = direction
+        self.size = np.array([601,601],dtype=np.int16) //self.resolution
+        #print(self.size)
         self.grid = np.ones((self.size)) * 0.5
         self.center = np.array([300,300])//self.resolution #0,0 point in the grid
         self.beta = np.deg2rad(5) #cone angle
@@ -16,44 +20,62 @@ class Point_grid:
         
     def generate(self,data):
         #x,y = data['point']
+        angles = np.deg2rad(np.array(data['angles'])+self.direction) #check this
+        x1 = np.round((np.array(data['distances']) * np.cos(angles + self.beta))//self.resolution).astype(np.int16)
+        y1 = np.round((np.array(data['distances']) * np.sin(angles + self.beta))//self.resolution).astype(np.int16)
         
-        x1 = np.round((np.array(data['distances']) * np.cos(np.deg2rad(np.array(data['angles'])) + self.beta))//self.resolution).astype(np.int16)
-        y1 = np.round((np.array(data['distances']) * np.sin(np.deg2rad(np.array(data['angles'])) + self.beta))//self.resolution).astype(np.int16)
+        x2 = np.round((np.array(data['distances']) * np.cos(angles - self.beta))//self.resolution).astype(np.int16)
+        y2 = np.round((np.array(data['distances']) * np.sin(angles - self.beta))//self.resolution).astype(np.int16)
         
-        x2 = np.round((np.array(data['distances']) * np.cos(np.deg2rad(np.array(data['angles'])) - self.beta))//self.resolution).astype(np.int16)
-        y2 = np.round((np.array(data['distances']) * np.sin(np.deg2rad(np.array(data['angles'])) - self.beta))//self.resolution).astype(np.int16)
+        dis_probs = self.dis_probs(np.array(data['distances']))
         
         obs_lines = []
+        probs=np.array([])
         empty_space = set()
         for i in range(len(x1)):
             if x1[i] == 0:continue
             
             obs_line = self.bresenham((x1[i],y1[i]),(x2[i],y2[i]))
             obs_lines.append(obs_line)
+            
             for point in obs_line:
-                empty_space.update(tuple(self.bresenham((0,0), tuple(point))))
+                temp = tuple(self.bresenham((0,0), tuple(point)))
+                
+                empty_x,empty_y = np.hsplit(np.array(temp),2)
+                empty_x = empty_x.flatten() + self.center[0]
+                empty_y = empty_y.flatten() + self.center[1]
+                self.grid [empty_y ,empty_x] = self.grid [empty_y ,empty_x] * (1-self.ratio) + (1-dis_probs[i])*(self.ratio)
+                #probs = np.concatenate((probs,[dis_probs[i]]*len(temp)),0)
+                #empty_space.update(temp)
         
-        empty_space = np.array(list(empty_space))
-        empty_space += self.center
-        empty_x,empty_y = np.hsplit(empty_space,2)
-        empty_x = empty_x.flatten()
-        empty_y = empty_y.flatten()
-        self.grid [empty_y ,empty_x] = self.grid [empty_y ,empty_x] * (self.ratio) + 0
+        # empty_space = np.array(list(empty_space))
+        # empty_space += self.center
+        # empty_x,empty_y = np.hsplit(empty_space,2)
+        # empty_x = empty_x.flatten()
+        # empty_y = empty_y.flatten()
+        # print(empty_x.shape,probs.shape)
+        # print(self.grid [empty_y ,empty_x] * (1-self.ratio) + (1-probs)*(self.ratio))
+        # self.grid [empty_y ,empty_x] = self.grid [empty_y ,empty_x] * (1-self.ratio) + (1-probs)*(self.ratio)
         
         for i in range(len(obs_lines)):
             obs_x,obs_y = np.hsplit(np.array(obs_lines[i]),2)
             obs_x = obs_x.flatten() + self.center[0]
             obs_y = obs_y.flatten() + self.center[1]
             
-            self.grid [obs_y ,obs_x] = self.grid [obs_y ,obs_x] * (1-self.ratio) + data['dis_probs'][i] * self.ratio
-            
+            self.grid [obs_y ,obs_x] = self.grid [obs_y ,obs_x] * (1-self.ratio) + dis_probs[i] * self.ratio
+    
+    def dis_probs(self,distances):#implement probability
+        temp = np.array(distances.copy(),dtype=np.float64)
+        probs = sigmoidProbability(temp)
+        return probs
         
-    def get_grid(self):
+    def get_grid(self,flip=True):
         out = self.grid.copy()
-        out[self.grid>0.8] = 1
-        out[self.grid<0.4] = 0
-        out[(out>=0.4) & (out<=0.8)] = 0.5
-        return np.flipud(out)
+        # out[self.grid>0.8] = 1
+        # out[self.grid<0.35] = 0
+        #out[(out>=0.35) & (out<=0.55)] = 0.5
+        if flip==False: return self.point,out
+        return self.point,np.flipud(out)
     
     def bresenham(self,start, end):
         '''
@@ -98,7 +120,7 @@ class Point_grid:
         return points
         
     def show(self):
-        out = self.get_grid()
+        _,out = self.get_grid()
         res = out.shape
         #fig=plt.figure(figsize=(10,6))
         plt.imshow(out, cmap = "PiYG_r")
@@ -109,19 +131,14 @@ class Point_grid:
         plt.colorbar()
         plt.show()
     
+    
+    
     def save_json(self):
         with open("point_grid_"+str(self.point[0])+" "+str(self.point[1])+".json", 'w') as outfile:
-            json.dump(self.get_grid().tolist(), outfile)
-    
-grid = Point_grid({"point": [0, 0], "angles": [45, 135, 225, 315, 50, 140, 230, 320, 55, 145, 235, 
-325, 60, 150, 240, 330, 65, 155, 245, 335, 70, 160, 250, 340, 75, 165, 255, 345, 80, 170, 260, 350, 
-85, 175, 265, 355, 90, 180, 270, 0, 95, 185, 275, 5, 100, 190, 280, 10, 105, 195, 285, 15, 110, 200, 
-290, 20, 115, 205, 295, 25, 120, 210, 300, 30, 125, 215, 305, 35, 130, 220, 310, 40, 135, 225, 315, 45],
- "distances": [72.0, 63.0, 62.0, 72.5, 74.0, 68.5, 59.0, 66.5, 71.0, 68.5, 55.5, 66.5, 63.5, 73.0, 43.5,
- 73.0, 59.5, 74.5, 42.0, 59.0, 54.5, 95.0, 42.0, 57.0, 54.0, 92.0, 41.0, 55.5, 53.0, 152.5, 41.0, 55.0, 
- 52.5, 86.0, 41.0, 55.0, 52.5, 167.5, 41.0, 55.0, 52.0, 153.0, 40.5, 54.5, 52.0, 140.0, 41.0, 55.0, 52.0,
- 107.0, 41.0, 55.5, 52.0, 100.0, 41.0, 56.0, 52.5, 91.5, 41.0, 57.5, 53.5, 65.0, 42.0, 60.5, 54.0, 63.5, 
- 42.5, 78.0, 101.0, 63.0, 57.0, 75.5, 144.0, 77.0, 67.5, 74.0], "dis_probs": [1, 1, 1, 1, 1, 1, 1, 1, 1, 
- 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
- 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]},2,0.75)
-grid.show()
+            _,grid = self.get_grid()
+            json.dump(grid.tolist(), outfile)
+if __name__ == '__main__':
+
+    grid = Point_grid({"point": [0, 2], "angles": [45, 135, 225, 315, 50, 140, 230, 320, 55, 145, 235, 325, 60, 150, 240, 330, 65, 155, 245, 335, 70, 160, 250, 340, 75, 165, 255, 345, 80, 170, 260, 350, 85, 175, 265, 355, 90, 180, 270, 0, 95, 185, 275, 5, 100, 190, 280, 10, 105, 195, 285, 15, 110, 200, 290, 20, 115, 205, 295, 25, 120, 210, 300, 30, 125, 215, 305, 35, 130, 220, 310, 40, 135, 225, 315, 45], "distances": [162, 110, 82, 58, 165, 166, 82, 59, 184, 106, 83, 59, 163, 136, 84, 60, 106, 140, 67, 72, 55, 137, 66, 80, 53, 271, 67, 93, 52, 270, 73, 90, 52, 265, 58, 122, 51, 283, 56, 114, 51, 283, 55, 151, 52, 284, 55, 151, 52, 266, 55, 151, 52, 179, 56, 151, 53, 124, 56, 152, 53, 84, 54, 117, 54, 87, 55, 79, 115, 84, 56, 86, 169, 83, 54, 78], "dis_probs": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]}
+    ,0,2,0.75)
+    grid.show()
