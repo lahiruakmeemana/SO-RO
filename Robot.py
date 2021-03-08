@@ -36,7 +36,7 @@ class Robot:
     def pathplan(self,start,end):
         return #return a distances list and directions
     
-    def movetopoint(self,distances,directions)
+    def movetopoint(self,distances,directions):
         #control wheels
         #update location and direction
         return
