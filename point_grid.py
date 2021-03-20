@@ -2,13 +2,14 @@ import numpy as np
 import json
 import matplotlib.pyplot as plt
 import math
-from prob_functions import sigmoidProbability,expoProbability
+from prob_functions import sigmoidProbability,expoProbability,lineprob
 
 class Point_grid:
     def __init__(self,data,direction,resolution=1,ratio=0.75):
-        self.resolution = resolution
+        self.resolution = 4
         self.point = data["point"]
-        self.direction = direction
+        self.direction = direction -90
+        #print(self.direction)
         self.size = np.array([601,601],dtype=np.int16) //self.resolution
         #print(self.size)
         self.grid = np.ones((self.size)) * 0.5
@@ -16,16 +17,23 @@ class Point_grid:
         self.beta = np.deg2rad(5) #cone angle
         self.ratio = ratio
         self.generate(data)
-        self.save_json()
-        
+        #self.save_json()
+        self.show()
     def generate(self,data):
         #x,y = data['point']
+        '''
+        90--> +0
+        180--> +90
+        270--> +180
+        0--> -90
+        '''
+        dis = np.array(data['distances'])
         angles = np.deg2rad(np.array(data['angles'])+self.direction) #check this
-        x1 = np.round((np.array(data['distances']) * np.cos(angles + self.beta))//self.resolution).astype(np.int16)
-        y1 = np.round((np.array(data['distances']) * np.sin(angles + self.beta))//self.resolution).astype(np.int16)
+        x1 = np.round((dis * np.cos(angles + self.beta))//self.resolution).astype(np.int16)
+        y1 = np.round((dis * np.sin(angles + self.beta))//self.resolution).astype(np.int16)
         
-        x2 = np.round((np.array(data['distances']) * np.cos(angles - self.beta))//self.resolution).astype(np.int16)
-        y2 = np.round((np.array(data['distances']) * np.sin(angles - self.beta))//self.resolution).astype(np.int16)
+        x2 = np.round((dis * np.cos(angles - self.beta))//self.resolution).astype(np.int16)
+        y2 = np.round((dis * np.sin(angles - self.beta))//self.resolution).astype(np.int16)
         
         dis_probs = self.dis_probs(np.array(data['distances']))
         
@@ -37,14 +45,19 @@ class Point_grid:
             
             obs_line = self.bresenham((x1[i],y1[i]),(x2[i],y2[i]))
             obs_lines.append(obs_line)
-            
+            distance = dis[i]//self.resolution
             for point in obs_line:
                 temp = tuple(self.bresenham((0,0), tuple(point)))
                 
                 empty_x,empty_y = np.hsplit(np.array(temp),2)
                 empty_x = empty_x.flatten() + self.center[0]
                 empty_y = empty_y.flatten() + self.center[1]
-                self.grid [empty_y ,empty_x] = self.grid [empty_y ,empty_x] * (1-self.ratio) + (1-dis_probs[i])*(self.ratio)
+                
+                empty_x = empty_x[:-1]
+                empty_y = empty_y[:-1]
+                newprobs = lineprob(len(empty_x),distance,dis_probs[i])
+                #print(len(empty_x),newprobs.shape)
+                self.grid [empty_y ,empty_x] = self.grid [empty_y ,empty_x] * (1-self.ratio) + newprobs*self.ratio
                 #probs = np.concatenate((probs,[dis_probs[i]]*len(temp)),0)
                 #empty_space.update(temp)
         
@@ -73,8 +86,9 @@ class Point_grid:
         out = self.grid.copy()
         # out[self.grid>0.8] = 1
         # out[self.grid<0.35] = 0
-        #out[(out>=0.35) & (out<=0.55)] = 0.5
-        if flip==False: return self.point,out
+        #out[(out>=0.45) & (out<=0.55)] = 0.5
+        if not(flip): return self.point,out
+        #print("flipped")
         return self.point,np.flipud(out)
     
     def bresenham(self,start, end):
@@ -120,7 +134,7 @@ class Point_grid:
         return points
         
     def show(self):
-        _,out = self.get_grid()
+        _,out = self.get_grid(flip=True)
         res = out.shape
         #fig=plt.figure(figsize=(10,6))
         plt.imshow(out, cmap = "PiYG_r")
@@ -139,6 +153,5 @@ class Point_grid:
             json.dump(grid.tolist(), outfile)
 if __name__ == '__main__':
 
-    grid = Point_grid({"point": [0, 2], "angles": [45, 135, 225, 315, 50, 140, 230, 320, 55, 145, 235, 325, 60, 150, 240, 330, 65, 155, 245, 335, 70, 160, 250, 340, 75, 165, 255, 345, 80, 170, 260, 350, 85, 175, 265, 355, 90, 180, 270, 0, 95, 185, 275, 5, 100, 190, 280, 10, 105, 195, 285, 15, 110, 200, 290, 20, 115, 205, 295, 25, 120, 210, 300, 30, 125, 215, 305, 35, 130, 220, 310, 40, 135, 225, 315, 45], "distances": [162, 110, 82, 58, 165, 166, 82, 59, 184, 106, 83, 59, 163, 136, 84, 60, 106, 140, 67, 72, 55, 137, 66, 80, 53, 271, 67, 93, 52, 270, 73, 90, 52, 265, 58, 122, 51, 283, 56, 114, 51, 283, 55, 151, 52, 284, 55, 151, 52, 266, 55, 151, 52, 179, 56, 151, 53, 124, 56, 152, 53, 84, 54, 117, 54, 87, 55, 79, 115, 84, 56, 86, 169, 83, 54, 78], "dis_probs": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]}
-    ,0,2,0.75)
+    grid = Point_grid({"point": [125, 50], "angles": [45, 135, 225, 315, 50, 140, 230, 320, 55, 145, 235, 325, 60, 150, 240, 330, 65, 155, 245, 335, 70, 160, 250, 340, 75, 165, 255, 345, 80, 170, 260, 350, 85, 175, 265, 355, 90, 180, 270, 0, 95, 185, 275, 5, 100, 190, 280, 10, 105, 195, 285, 15, 110, 200, 290, 20, 115, 205, 295, 25, 120, 210, 300, 30, 125, 215, 305, 35, 130, 220, 310, 40, 135, 225, 315, 45], "distances": [269.0, 191.0, 77.0, 268.0, 0.0, 63.0, 76.0, 117.0, 0.0, 46.0, 78.0, 74.0, 249.0, 44.0, 76.0, 55.0, 276.0, 43.0, 80.0, 54.0, 295.0, 42.0, 164.0, 54.0, 242.0, 41.0, 163.0, 54.0, 241.0, 41.0, 157.0, 54.0, 231.0, 41.0, 155.0, 215.0, 268.0, 41.0, 84.0, 215.0, 268.0, 41.0, 199.0, 214.0, 295.0, 41.0, 176.0, 215.0, 290.0, 41.0, 218.0, 216.0, 272.0, 42.0, 211.0, 216.0, 232.0, 42.0, 226.0, 216.0, 269.0, 43.0, 268.0, 216.0, 249.0, 43.0, 299.0, 269.0, 0.0, 54.0, 0.0, 218.0, 244.0, 139.0, 298.0, 217.0], "dis_probs": [0.735, 0.9296, 0.9923, 0.7389, 0.0, 0.9942, 0.9925, 0.983, 0.0, 0.9958, 0.9922, 0.9928, 0.8053, 0.996, 0.9925, 0.995, 0.7068, 0.9961, 0.9918, 0.9951, 0.6225, 0.9962, 0.9577, 0.9951, 0.8264, 0.9962, 0.9585, 0.9951, 0.8292, 0.9962, 0.963, 0.9951, 0.8557, 0.9962, 0.9644, 0.8909, 0.7389, 0.9962, 0.9912, 0.8909, 0.7389, 0.9962, 0.9183, 0.8928, 0.6225, 0.9962, 0.9468, 0.8909, 0.6457, 0.9962, 0.8849, 0.8889, 0.7231, 0.9962, 0.8984, 0.8889, 0.8532, 0.9962, 0.8676, 0.8889, 0.735, 0.9961, 0.7389, 0.8889, 0.8053, 0.9961, 0.6035, 0.735, 0.0, 0.9951, 0.0, 0.8849, 0.8205, 0.9739, 0.6083, 0.887]},90,2,0.75)
     grid.show()
