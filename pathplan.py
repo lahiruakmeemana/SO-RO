@@ -20,7 +20,7 @@ class BidirectionalAStarPlanner:
         self.max_x, self.max_y = None, None
         self.x_width, self.y_width, self.obstacle_map = None, None, None
         self.resolution = resolution
-        self.rr = rr
+        self.rr = rr/self.resolution
         self.calc_obstacle_map(ox, oy)
         self.motion = self.get_motion_model()
 
@@ -61,14 +61,15 @@ class BidirectionalAStarPlanner:
         current_A = start_node
         current_B = goal_node
         meet_point_A, meet_point_B = None, None
-        print(len(open_set_B))
         while 1:
             if len(open_set_A) == 0:
                 print("Open set A is empty..")
+                print("Path cannot be found")
                 break
 
             if len(open_set_B) == 0:
                 print("Open set B is empty..")
+                print("Path cannot be found")
                 break
 
             c_id_A = min(
@@ -243,15 +244,11 @@ class BidirectionalAStarPlanner:
         self.min_y = round(min(oy))
         self.max_x = round(max(ox))
         self.max_y = round(max(oy))
-        print("min_x:", self.min_x)
-        print("min_y:", self.min_y)
-        print("max_x:", self.max_x)
-        print("max_y:", self.max_y)
-
+        
         self.x_width = int(round((self.max_x - self.min_x) // self.resolution))
         self.y_width = int(round((self.max_y - self.min_y) // self.resolution))
-        print("x_width:", self.x_width)
-        print("y_width:", self.y_width)
+        #print("x_width:", self.x_width)
+        #print("y_width:", self.y_width)
 
         # obstacle map generation
         self.obstacle_map = [[False for _ in range(self.y_width)]
@@ -289,9 +286,7 @@ def direction_distance(ox,oy,res):
     last_dir = motions.index(changes[0])*90
     curr_dis = 1
     changes = changes[1:]
-    print(len(changes),len(ox))
     for i,change in enumerate(changes):
-        #print(i,",",change,ox[i+1],oy[i+1])
         try:
             
             curr_dir = motions.index(change)*90
@@ -305,7 +300,6 @@ def direction_distance(ox,oy,res):
                 curr_dis = 1
                 last_dir = curr_dir
         except:
-            #print("error",i)
             pass
         if i==len(changes)-1:
             dir.append(last_dir)
@@ -314,15 +308,15 @@ def direction_distance(ox,oy,res):
     dir = np.array(dir)
     return dir,dis
         
-def pathplanning(map,start,end,animation=False):
-        y,x = np.where(map.get_grid(flip=False)>[0.75])
+def pathplanning(map,start,end,resolution,animation=False):
+        y,x = np.where(map.get_grid(flip=False)>[0.70])
         ox = (x-map.center[0]+1).tolist()
         oy = (y-map.center[1]+1).tolist()
         x = [map.min_x,map.max_x-map.center[0]]
         y = [map.min_y,map.max_y-map.center[1]]
         x.extend(ox)
         y.extend(oy)
-        resolution = 1.2
+        resolution = 2
         try:
             if show_animation:  
                 plt.plot(x, y, ".k")
@@ -332,7 +326,7 @@ def pathplanning(map,start,end,animation=False):
                 plt.axis("equal")
                 #plt.show()
             
-            bidir_a_star = BidirectionalAStarPlanner(x, y, resolution, 10)
+            bidir_a_star = BidirectionalAStarPlanner(x, y, resolution, 2)
             rx, ry = bidir_a_star.planning(start[0], start[1], end[0], end[1])
             if show_animation:
                 plt.plot(rx, ry, "-r")
@@ -343,8 +337,8 @@ def pathplanning(map,start,end,animation=False):
             dir,dis = direction_distance(rx, ry,resolution )
         except:
             return 0,0
-        print(dir)
-        print(dis)
+        # print(dir)
+        # print(dis)
         
         
         return dir,dis

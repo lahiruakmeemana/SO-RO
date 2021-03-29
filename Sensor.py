@@ -32,13 +32,15 @@ class Sensor:
 
         while GPIO.input(self.echo) == True and (datetime.datetime.now()-initial).microseconds<17500:
             end = datetime.datetime.now()
+        try:
+            sig_time = end-start
 
-        sig_time = end-start
-
-        distance = round(sig_time.microseconds / 58)   
-        if distance<20 or distance >300: distance=None
-        #print('Distance {}: {} centimeters'.format(self.id,distance))
-        self.distance = distance
+            distance = round(sig_time.microseconds / 58)   
+            if distance<20 or distance >300: distance=None
+            #print('Distance {}: {} centimeters'.format(self.id,distance))
+            self.distance = distance
+        except:pass
+        
         return self.distance
     def getdistance(self):
         if self.distance == None: return None
@@ -84,7 +86,7 @@ class MultiSensor:
             json.dump(self.readings, outfile)
         #print("distances saved to "+path)
       
-    def turnAndGetDistance(self,location):
+    def turnAndGetDistance(self,location,direction):
         
         forward=[]
         backward=[]
@@ -104,6 +106,7 @@ class MultiSensor:
             forward.append(d)
             angles.append([(i+self.sensor_angles[j])%360 for j in range(self.num_of_sensors)])
         #print(forward)
+        '''
         for i in range(45+self.sweep_angle,44,-self.step):
             self.setAngle(i)
             threads=[Thread(target = sensor.run) for sensor in self.sensors ]
@@ -116,17 +119,23 @@ class MultiSensor:
             
             backward.insert(0,d)
         #print(backward)
+        '''
         angles = np.array(angles).flatten()#np.deg2rad(np.array(angles).flatten())
-        forward=np.array(forward).flatten()
-        backward=np.array(backward).flatten()
-        forward[np.where(forward==None)] = backward[np.where(forward==None)]
-        backward[np.where(backward==None)] = forward[np.where(backward==None)]
-        forward[np.where(forward==None)] = 0
-        backward[np.where(backward==None)] = 0
+        forward=np.array(forward).flatten().astype(np.double)
+        # backward=np.array(backward).flatten().astype(np.double)
         
-        rounded=(forward+backward)//2
-        dis_probs = self.dis_prob(rounded , angles)
-        distances={'point':point,'angles':angles.tolist(),'distances':rounded.tolist(),'dis_probs':dis_probs}
+        # forward[np.where(forward==0)] = backward[np.where(forward==0)]
+        # backward[np.where(backward==0)] = forward[np.where(backward==0)]
+        # #forward[np.where(forward==None)] = 0
+        # #backward[np.where(backward==None)] = 0
+        
+        # rounded=np.round(forward*0.25+backward*0.75)
+        rounded = np.round(forward)
+        #print(rounded)
+        #rounded[np.where(rounded==)]
+        dis_probs = self.dis_prob(rounded)
+        
+        distances={'point':point,'direction': direction,'angles':angles.tolist(),'distances':rounded.tolist(),'dis_probs':dis_probs}
         self.readings.append(distances)
         return distances
         

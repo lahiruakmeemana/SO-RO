@@ -34,7 +34,7 @@ def lineprob(arrlen,dis,prob):
     step = round(prob/arrlen,6)
     arr = np.arange(prob,0,-step) + 1-prob
     if arr.shape[0] > arrlen: arr = arr[0:arrlen]
-    print("in prob",arrlen, arr.shape,step,prob,dis, prob)
+    #print("in prob",arrlen, arr.shape,step,prob,dis, prob)
     a_ = np.round(1/(dis),4)
     out = np.round(np.e**((200-dis)*(arr-1)*(dis//4)*a_)*prob,4)
     out[out<0.1] = 0.1

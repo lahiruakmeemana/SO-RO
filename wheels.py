@@ -22,18 +22,13 @@ class Wheels:
         
         self.clkB = 36 #32
         self.dtB = 12 #36
-        
 
-        ##-------From Online--------
-        #https://github.com/modmypi/Rotary-Encoder/blob/master/rotary_encoder.py
         GPIO.setup(self.clkA, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-        GPIO.setup(self.dtA, GPIO.IN, pull_up_down=GPIO.PUD_UP) #was pud down
+        GPIO.setup(self.dtA, GPIO.IN, pull_up_down=GPIO.PUD_UP) 
 
         GPIO.setup(self.clkB, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         GPIO.setup(self.dtB, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        ##-------End From Online--------
 
-        #set GPIO direction (IN / OUT)
 
 
         GPIO.setup(self.Motor1A,GPIO.OUT)
@@ -44,7 +39,7 @@ class Wheels:
         GPIO.setup(self.Motor2B,GPIO.OUT)
         GPIO.setup(self.Motor2E,GPIO.OUT)
 
-        #set motor speeds
+
         GPIO.output(self.Motor1E,GPIO.LOW)
         GPIO.output(self.Motor2E,GPIO.LOW)
             
@@ -74,7 +69,7 @@ class Wheels:
         dis_right = round(right/ self.dis_per_hole)
         print("dis",dis_left,dis_right)
         sensor.setAngle(90)
-        self.setSpeed(300)
+        #self.setSpeed(100)
         while True:
             if encoder_count_left>=dis_left:self.stopA()
             if encoder_count_right>=dis_right:self.stopB()
@@ -112,7 +107,7 @@ class Wheels:
         #print(lastleft,lastright)
         dis_left = round(left/ self.dis_per_hole)
         dis_right = round(right/ self.dis_per_hole)
-        #print(dis_left,dis_right)
+        #self.setSpeed(100)
         while True:
             if encoder_count_left>=dis_left:self.stopA()
             if encoder_count_right>=dis_right:self.stopB()
@@ -152,10 +147,10 @@ class Wheels:
         
         GPIO.output(self.Motor1E,GPIO.HIGH)
         GPIO.output(self.Motor2E,GPIO.HIGH)
-        self.pwm1.start(20)
+        self.pwm1.start(10)
         self.pwm2.start(0)
         self.pwm3.start(0)
-        self.pwm4.start(20)
+        self.pwm4.start(10)
         return self.distance(cm,cm,sensor)
         
 
@@ -163,8 +158,8 @@ class Wheels:
         # GPIO.output(self.Motor1E,GPIO.HIGH)
         # GPIO.output(self.Motor2E,GPIO.HIGH)
         # self.pwm1.start(0)
-        # self.pwm2.start(20)
-        # self.pwm3.start(20)
+        # self.pwm2.start(15)
+        # self.pwm3.start(15)
         # self.pwm4.start(0)
         # self.turning(cm,cm)
 
@@ -172,28 +167,28 @@ class Wheels:
         GPIO.output(self.Motor1E,GPIO.HIGH)
         GPIO.output(self.Motor2E,GPIO.HIGH)
         self.pwm1.start(0)
-        self.pwm2.start(20)
+        self.pwm2.start(10)
         self.pwm3.start(0)
-        self.pwm4.start(20)
-        self.turning(23, 23)
+        self.pwm4.start(10)
+        self.turning(19, 19)
 
     def turn270(self):
         GPIO.output(self.Motor1E,GPIO.HIGH)
         GPIO.output(self.Motor2E,GPIO.HIGH)
-        self.pwm1.start(20)
+        self.pwm1.start(10)
         self.pwm2.start(0)
-        self.pwm3.start(20)
+        self.pwm3.start(10)
         self.pwm4.start(0)
-        self.turning(23,23)
+        self.turning(19,19)
     
     def turn180(self):
         GPIO.output(self.Motor1E,GPIO.HIGH)
         GPIO.output(self.Motor2E,GPIO.HIGH)
-        self.pwm1.start(20)
+        self.pwm1.start(10)
         self.pwm2.start(0)
-        self.pwm3.start(20)
+        self.pwm3.start(10)
         self.pwm4.start(0)
-        self.turning(46,46)
+        self.turning(38,38)
 
     def turn(self,angle):
         if angle == 0: pass
