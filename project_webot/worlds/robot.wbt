@@ -1,0 +1,287 @@
+#VRML_SIM R2021a utf8
+WorldInfo {
+  coordinateSystem "NUE"
+}
+Viewpoint {
+  orientation 0.6107807143683195 0.5178969172945659 0.5989404828632898 4.103254580283827
+  position 1.2611141249809776 10.083882840661504 -0.3774882726847202
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+DEF Body RectangleArena {
+  floorSize 7 7
+  wallHeight 0.3
+}
+Robot {
+  translation 7.308764704294339e-09 0.08182750900879036 -0.0008157153586587779
+  children [
+    DEF uslayer HingeJoint {
+      jointParameters HingeJointParameters {
+        position -2.888764040359494e-10
+        axis 0 1 0
+        anchor 0 0.065 0
+      }
+      device [
+        PositionSensor {
+          name "servo_encoder"
+        }
+        RotationalMotor {
+          name "servo"
+        }
+      ]
+      endPoint Solid {
+        translation 3.9313745937640796e-13 0.0649955730058588 -4.3765650262616766e-08
+        rotation 0 -1 0 0.7854003370101886
+        children [
+          DEF usarray Shape {
+            appearance PBRAppearance {
+            }
+            geometry Cylinder {
+              height 0.02
+              radius 0.03
+            }
+          }
+          DEF us0 DistanceSensor {
+            translation 0 0.01 0
+            rotation 0 -1 0 1.5707996938995747
+            name "us0"
+            boundingObject USE usarray
+            physics Physics {
+            }
+            lookupTable [
+              0 0.105 0.05
+              3 3.105 0.05
+            ]
+            type "sonar"
+            numberOfRays 10
+            aperture 0.1
+          }
+          DEF us1 DistanceSensor {
+            translation 0 0.01 0
+            rotation 0 -1 0 0
+            name "us1"
+            boundingObject USE usarray
+            physics Physics {
+            }
+            lookupTable [
+              0 0.105 0
+              3 3.105 0
+            ]
+            type "sonar"
+            numberOfRays 10
+            aperture 0.1
+          }
+          DEF us2 DistanceSensor {
+            translation 0 0.01 0
+            rotation 0 -1 0 -1.570795613280012
+            name "us2"
+            boundingObject USE usarray
+            physics Physics {
+            }
+            rotationStep 0.261799
+            lookupTable [
+              0 0.105 0
+              3 3.105 0
+            ]
+            type "sonar"
+            numberOfRays 10
+            aperture 0.1
+          }
+          DEF us3 DistanceSensor {
+            translation 0 0.01 0
+            rotation 0 -1 0 3.141592653589793
+            name "us3"
+            boundingObject USE usarray
+            physics Physics {
+            }
+            lookupTable [
+              0 0.105 0
+              3 3.105 0
+            ]
+            type "sonar"
+            numberOfRays 10
+            aperture 0.1
+          }
+        ]
+        name "solid(4)"
+        boundingObject USE usarray
+        physics Physics {
+        }
+        rotationStep 0.087266
+      }
+    }
+    DEF left_motor HingeJoint {
+      jointParameters HingeJointParameters {
+        position -3.7186919398010813e-11
+        anchor 0.07 -0.05 0
+      }
+      device [
+        PositionSensor {
+          name "left_encoder"
+        }
+        DEF left_motor RotationalMotor {
+          name "left_motor"
+        }
+      ]
+      endPoint Solid {
+        translation 0.07 -0.05 0
+        rotation -7.038233733219764e-09 7.038257570953343e-09 1 1.5707996938995747
+        children [
+          DEF wheel Shape {
+            appearance Rubber {
+            }
+            geometry Cylinder {
+              height 0.02
+              radius 0.0325
+            }
+          }
+        ]
+        boundingObject USE wheel
+        physics DEF wheel_physics Physics {
+        }
+      }
+    }
+    DEF right_motor HingeJoint {
+      jointParameters HingeJointParameters {
+        position -5.112214556793026e-11
+        anchor -0.07 -0.05 0
+      }
+      device [
+        PositionSensor {
+          name "right_encoder"
+        }
+        DEF right_motor RotationalMotor {
+          name "right_motor"
+        }
+      ]
+      endPoint Solid {
+        translation -0.07 -0.05 0
+        rotation -8.026142925719874e-09 8.026169918095582e-09 0.9999999999999998 1.5707996938995743
+        children [
+          DEF wheel Shape {
+            appearance Rubber {
+            }
+            geometry Cylinder {
+              height 0.02
+              radius 0.0325
+            }
+          }
+        ]
+        name "solid(1)"
+        boundingObject USE wheel
+        physics DEF wheel_physics Physics {
+        }
+      }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        position 0.01977311204154282
+        anchor 0 -0.065 0.06
+      }
+      endPoint Solid {
+        translation 0 -0.065 0.06
+        rotation 0.009885878558148205 -0.009885911844992108 0.9999022642999298 1.5708974343759043
+        children [
+          DEF wheel Shape {
+            appearance Rubber {
+            }
+            geometry Cylinder {
+              height 0.02
+              radius 0.01625
+            }
+          }
+        ]
+        name "solid(2)"
+        boundingObject USE wheel
+        physics DEF wheel_physics Physics {
+        }
+      }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        position 0.024672342250536293
+        anchor 0 -0.065 -0.06
+      }
+      endPoint Solid {
+        translation 0 -0.065 -0.06
+        rotation 0.012334878220166786 -0.012334919753062659 0.9998478386904576 1.57095186678616
+        children [
+          DEF wheel Shape {
+            appearance Rubber {
+            }
+            geometry Cylinder {
+              height 0.02
+              radius 0.01625
+            }
+          }
+        ]
+        name "solid(3)"
+        boundingObject USE wheel
+        physics DEF wheel_physics Physics {
+        }
+      }
+    }
+    DEF Body Shape {
+      appearance PBRAppearance {
+      }
+      geometry Cylinder {
+        height 0.11
+        radius 0.06
+      }
+    }
+  ]
+  boundingObject USE Body
+  physics Physics {
+  }
+  controller "wheel_control"
+}
+WoodenBox {
+  translation -1.3503646241195237 0.09929544183800462 -2.9889099317037915
+  rotation 0.0017614022843992039 0.9999969023617633 -0.0017586156120140708 -1.571527875536222
+  size 0.2 0.2 2
+  mass 2
+}
+WoodenBox {
+  translation 0.3794860228679692 0.09921363256425807 -0.7488141513484606
+  rotation 1.89122594670597e-05 0.9999999994092572 -2.870212594688759e-05 -1.565779763907049
+  name "wooden box(6)"
+  size 0.2 0.2 2
+  mass 2
+}
+WoodenBox {
+  translation -1.81295 0.0992152 -1.886
+  rotation 0.9973928174708797 0.026587889361456098 0.06708689735561962 0
+  name "wooden box(5)"
+  size 0.2 0.2 2
+  mass 2
+}
+WoodenBox {
+  translation 1.447513341219936 0.09921808134910777 0.14271459026212774
+  rotation -0.0008571446268857729 0.999117167502661 0.04200179644429947 0
+  name "wooden box(1)"
+  size 0.2 0.2 2
+  mass 2
+}
+WoodenBox {
+  translation -1.833451412538909 0.09921543353612615 0.1132330043985002
+  rotation -0.9960790599559394 0.02632260618531259 -0.08446079990685197 0
+  name "wooden box(3)"
+  size 0.2 0.2 2
+  mass 2
+}
+WoodenBox {
+  translation -0.5252030318258745 0.09921531999480704 -1.8699879538574893
+  rotation 2.5484752601502204e-17 0.9999999999999999 1.9799047139405015e-15 0.002216954118420005
+  name "wooden box(4)"
+  size 0.2 0.2 2
+  mass 2
+}
+WoodenBox {
+  translation -0.189507 0.0992141 0.518188
+  rotation -6.14273775013982e-06 0.9999999999701114 -4.695124103168232e-06 1.5614452489330608
+  name "wooden box(2)"
+  size 0.2 0.2 3
+  mass 2
+}
